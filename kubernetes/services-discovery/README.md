@@ -2,9 +2,50 @@
 
 In this folder you will find example on creating objects in Kubernetes and learn what Service Discovery is. You will use selectors for both Replicaset, Services and PVC objects. You will also try and create a rogue pod with the same labe as our replicaset, and see how the replicaset behaves. Also, you will scale the replicaset and see how the endpoints for the Service will include the new pods automatically.
 
+# Service discovery in Replicaset
+Replicaset are used to keep a specific number of identical pods running. When specifying a replicaSet, can also use a selector to select which pods to manage. Examine the files `./replicaset/multitool.yaml`
+
+```
+apiVersion: apps/v1
+kind: ReplicaSet
+metadata:
+  name: multitool
+  labels:
+    app: multitool
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      tier: frontend
+  template:
+    metadata:
+      labels:
+        tier: frontend
+    spec:
+      containers:
+      - name: multitool
+        image: praqma/network-multitool
+```
+
+As we can see the replicaSet has a selector to match pods with the label key `tier` and key `frontend` and in the template it's creating pods with this label as well. This way all pods created by this replicaSet will be controlled by it. We specify 3 replicas, so we would expect 3 pods created by this replicaSet.
+
+Apply the replica set
+```
+kubectl apply -f multitool.yaml
+```
+
+To verify, we can use our own selector when using kubectl to see that we get 3 pods with the label
+```
+kubectl get pods -l tier=frontend
+
+NAME              READY   STATUS    RESTARTS   AGE
+multitool-82c25   1/1     Running   0          14s
+multitool-glhjz   1/1     Running   0          14s
+multitool-jlgk6   1/1     Running   0          14s
+```
 
 # Service discovery in Services
-Lets create a service and base it on our multitool pods maching our label. Examing the file `./service/multitool.yaml`
+Lets create a service and base it on our multitool pods maching our label. Examine the file `./service/multitool.yaml`
 
 ```
 apiVersion: v1
@@ -43,10 +84,10 @@ kubectl get endpoints -l tier=frontend
 NAME        ENDPOINTS                                      AGE
 multitool   10.42.0.187:80,10.42.1.142:80,10.42.2.254:80   19s
 ```
-So again the system uses service discovery to find the objects it needs an relationship with. 
+So again the system uses service discovery to find the objects it has an relationship with. 
 
 # Scaling the Replicaset and check endpoints
-So, what happens when we scale our replicaset? Do we get more endpoints?
+So, what happens when we scale our replicaset? Do the service get more endpoints?
 Let's try.
 
 ```
@@ -201,48 +242,6 @@ multitool   Bound    multitool
 
 We see that the PV is bound by the PVC (claim) multitool. Awesome.
 
-
-# Service discovery in Replicaset
-Replicaset are used to keep a specific number of identical pods running. When specifying a replicaSet, can also use a selector to select which pods to manage. Examine the files `./replicaset/multitool.yaml`
-
-```
-apiVersion: apps/v1
-kind: ReplicaSet
-metadata:
-  name: multitool
-  labels:
-    app: multitool
-spec:
-  replicas: 3
-  selector:
-    matchLabels:
-      tier: frontend
-  template:
-    metadata:
-      labels:
-        tier: frontend
-    spec:
-      containers:
-      - name: multitool
-        image: praqma/network-multitool
-```
-
-As we can see the replicaSet has a selector to match pods with the label key `tier` and key `frontend` and in the template it's creating pods with this label as well. This way all pods created by this replicaSet will be controlled by it. We specify 3 replicas, so we would expect 3 pods created by this replicaSet.
-
-Apply the replica set
-```
-kubectl apply -f multitool.yaml
-```
-
-To verify, we can use our own selector when using kubectl to see that we get 3 pods with the label
-```
-kubectl get pods -l tier=frontend
-
-NAME              READY   STATUS    RESTARTS   AGE
-multitool-82c25   1/1     Running   0          14s
-multitool-glhjz   1/1     Running   0          14s
-multitool-jlgk6   1/1     Running   0          14s
-```
 
 # DNS lookup
 While the core service discovery is happening in Kubernetes, most people will not interact with it nor define it as the above, but instead as the the result of DNS being able to resolve pods ip. The very nature of the DNS is simply to resolve a name to an ip. In this case an cluster DNS to a cluster ip of an service. The ip of a service is static, but the endpoints behind it is very dynamic. The discovery part is done by the service, not the DNS. 
