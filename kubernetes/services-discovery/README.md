@@ -3,7 +3,7 @@
 In this folder you will find example on creating objects in Kubernetes and learn what Service Discovery is. You will use selectors for both Replicaset, Services and PVC objects. You will also try and create a rogue pod with the same labe as our replicaset, and see how the replicaset behaves. Also, you will scale the replicaset and see how the endpoints for the Service will include the new pods automatically.
 
 # Service discovery in Replicaset
-Replicaset are used to keep a specific number of identical pods running. When specifying a replicaSet, can also use a selector to select which pods to manage. Examine the files `./replicaset/multitool.yaml`
+Replicaset are used to keep a specific number of identical pods running. When specifying a replicaSet, you can use a selector to select which pods to manage. Examine the files `./replicaset/multitool.yaml`
 
 ```
 apiVersion: apps/v1
@@ -27,7 +27,7 @@ spec:
         image: praqma/network-multitool
 ```
 
-As we can see the replicaSet has a selector to match pods with the label key `tier` and key `frontend` and in the template it's creating pods with this label as well. This way all pods created by this replicaSet will be controlled by it. We specify 3 replicas, so we would expect 3 pods created by this replicaSet.
+As we can see the replicaSet has a selector to match pods with the label key `tier` and value `frontend` and in the template it's creating pods with this label as well. This way all pods created by this replicaSet will be controlled by it. We specify 3 replicas, so we would expect 3 pods created by this replicaSet.
 
 Apply the replica set
 ```
@@ -63,7 +63,7 @@ spec:
       targetPort: 80
 ```
 
-The service it self has a label, but it also has a selector to choose and match pods with a specified label. This label has the key `tier` and key `frontend` just like our pods. So lets apply it and see that endpoints we get.
+The service itself has a label, but it also has a selector to choose and match pods with a specified label. This label has the key `tier` and value `frontend` just like our pods. So lets apply it and see that endpoints we get.
 
 ```
 kubectl apply -f multitool.yaml
@@ -115,12 +115,13 @@ multitool   10.42.0.187:80,10.42.1.142:80,10.42.1.143:80 + 2 more...   88s
 ```
 We see that we now have 5 endpoints (3 listed and + 2 more).
 
-So building relationsships between objects with labels and selectors is really powerfull. Let's see if we can cheet the system
-
 Lets scale it back to three replicas
 ```
 kubectl scale replicaset multitool --replicas 3
 ```
+
+So building relationsships between objects with labels and selectors is really powerfull. Let's see if we can cheat the system
+
 
 # Trying to hijack a Replicaset and service with a rogue pod
 But, what if we try and create a rogue pod with the same label? Would it be controlled by the replicaSet? Would it get to live? We did specify a replica of 3, and with an additional pod, that would give us 4 which is not the desired state specified in the replicaSet.
@@ -183,7 +184,7 @@ From the last line, we can see that the replicaset deleted our rogue pod, to rec
 
 
 # Service discovery in PV and PVC
-In the file ./pvc/pv.yaml you will find a manifest for a Persistant Volume 
+In the file ./pvc/pv.yaml you will find a manifest for a Persistent Volume 
 ```
 apiVersion: v1
 kind: PersistentVolume
@@ -206,7 +207,7 @@ As we can see, it has a label key `volume-type` with the value `multitool`. This
 kubectl apply -f pv.yaml
 ```
 
-Now we need to apply our PVC and match it to our PV. We dont want it to just pick any random PV that matches the criterias like size and accessMode. So we use a selector to specify which PV we want. This could be a pool og PV with the same label, but in this case it's just the above PV.
+Now we need to apply our PVC and match it to our PV. We dont want it to just pick any random PV that matches the criterias like size and accessMode. So we use a selector to specify which PV we want. This could be a pool of PV with the same label, but in this case it's just the above PV.
 
 Examine the file ./pvc/pvc.yaml
 ```
