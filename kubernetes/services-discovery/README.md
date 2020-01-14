@@ -76,6 +76,11 @@ We see that we now have 5 endpoints (3 listed and + 2 more).
 
 So building relationsships between objects with labels and selectors is really powerfull. Let's see if we can cheet the system
 
+Lets scale it back to three replicas
+```
+kubectl scale replicaset multitool --replicas 3
+```
+
 # Trying to hijack a Replicaset and service with a rogue pod
 But, what if we try and create a rogue pod with the same label? Would it be controlled by the replicaSet? Would it get to live? We did specify a replica of 3, and with an additional pod, that would give us 4 which is not the desired state specified in the replicaSet.
 
